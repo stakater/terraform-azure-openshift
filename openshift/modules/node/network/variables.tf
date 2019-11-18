@@ -1,0 +1,11 @@
+variable "name" {}
+variable "azure_location" {}
+variable "resource_group_name" {}
+variable "virtual_network_name" {}
+variable "expose_node" {}
+variable "enable_scaling" {}
+variable "node_count" {}
+variable "subnet_address_prefix" {}
+variable "lb_backend_address_pool_id" {}
+variable "ip_address_id" {}
+variable "security_group_id" {}
