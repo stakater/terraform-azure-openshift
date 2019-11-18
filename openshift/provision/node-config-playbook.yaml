@@ -1,0 +1,60 @@
+- hosts: all
+  become: true
+  tasks:
+${use_community == "true" ? "#" : ""}    - name: Register RHN
+${use_community == "true" ? "#" : ""}      redhat_subscription:
+${use_community == "true" ? "#" : ""}        username: ${rhn_username}
+${use_community == "true" ? "#" : ""}        password: ${rhn_password}
+${use_community == "true" ? "#" : ""}        pool_ids: ${rh_subscription_pool_id}
+${use_community == "true" ? "#" : ""}        state: present
+${use_community == "true" ? "#" : ""}      when: ansible_distribution in ['RedHat']
+${use_community == "true" ? "#" : ""}    - name: Disable all RHSM repositories
+${use_community == "true" ? "#" : ""}      rhsm_repository:
+${use_community == "true" ? "#" : ""}        name: '*'
+${use_community == "true" ? "#" : ""}        state: disabled
+${use_community == "true" ? "#" : ""}      when: ansible_distribution in ['RedHat']
+${use_community == "true" ? "#" : ""}    - name: Enable all repositories except required for openshift install
+${use_community == "true" ? "#" : ""}      rhsm_repository:
+${use_community == "true" ? "#" : ""}        name: "{{ item }}"
+${use_community == "true" ? "#" : ""}        state: enabled
+${use_community == "true" ? "#" : ""}      register: rhsm_repository
+${use_community == "true" ? "#" : ""}      with_items: 
+${use_community == "true" ? "#" : ""}      - rhel-7-server-rpms
+${use_community == "true" ? "#" : ""}      - rhel-7-server-extras-rpms
+${use_community == "true" ? "#" : ""}      - rhel-7-server-ansible-2.6-rpms
+${use_community == "true" ? "#" : ""}      - rhel-7-server-ose-${openshift_major_version}-rpms
+${use_community == "true" ? "#" : ""}      when: ansible_distribution in ['RedHat']
+${use_community == "false" ? "#" : ""}    - name: Allow network to be controlled by Network Manager
+${use_community == "false" ? "#" : ""}      lineinfile:
+${use_community == "false" ? "#" : ""}        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+${use_community == "false" ? "#" : ""}        regexp: '^NM_CONTROLLED=no$'
+${use_community == "false" ? "#" : ""}        line: 'NM_CONTROLLED=yes'
+${use_community == "false" ? "#" : ""}        backrefs: yes
+${use_community == "false" ? "#" : ""}    - name: "disabled obsolete for yum" # https://github.com/openshift/origin/issues/20653
+${use_community == "false" ? "#" : ""}      lineinfile:
+${use_community == "false" ? "#" : ""}        dest: '/etc/yum.conf'
+${use_community == "false" ? "#" : ""}        state: present
+${use_community == "false" ? "#" : ""}        regexp: '^obsoletes=1$'
+${use_community == "false" ? "#" : ""}        line: 'obsoletes=0'
+${use_community == "false" ? "#" : ""}      when: ansible_distribution in ['CentOS']
+${use_community == "false" ? "#" : ""}    - name: ensure a list of packages for OKD install
+${use_community == "false" ? "#" : ""}      yum:
+${use_community == "false" ? "#" : ""}        name: "{{ packages }}"
+${use_community == "false" ? "#" : ""}      vars:
+${use_community == "false" ? "#" : ""}        packages:
+${use_community == "false" ? "#" : ""}        - NetworkManager
+${use_community == "false" ? "#" : ""}        - docker-1.13.1
+${use_community == "false" ? "#" : ""}      when: ansible_distribution in ['CentOS']
+${use_community == "false" ? "#" : ""}    - name: enable NetworkManager
+${use_community == "false" ? "#" : ""}      systemd:
+${use_community == "false" ? "#" : ""}        name: NetworkManager
+${use_community == "false" ? "#" : ""}        state: started
+${use_community == "false" ? "#" : ""}        enabled: yes
+${use_community == "false" ? "#" : ""}      when: ansible_distribution in ['CentOS']
+${use_community == "false" ? "#" : ""}    - name: enable Docker
+${use_community == "false" ? "#" : ""}      systemd:
+${use_community == "false" ? "#" : ""}        name: docker
+${use_community == "false" ? "#" : ""}        state: started
+${use_community == "false" ? "#" : ""}        enabled: yes
+${use_community == "false" ? "#" : ""}      when: ansible_distribution in ['CentOS']
+

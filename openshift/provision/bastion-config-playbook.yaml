@@ -1,0 +1,40 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: ensure a list of packages for OpenShift install
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - vim
+        - git
+        - tmux
+    - name: ensure a list of packages for OCP
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - openshift-ansible
+        - atomic-openshift-clients
+      when: ansible_distribution in ['RedHat']
+    - name: ensure a list of packages for OKD 
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - pyOpenSSL
+        - python-lxml
+        - java-1.8.0-openjdk-headless
+        - patch
+      when: ansible_distribution in ['CentOS']
+    - name: install openshift-ansible from git repo
+      git:
+        repo: 'https://github.com/openshift/openshift-ansible.git'
+        dest: /usr/share/ansible/openshift-ansible
+        version: release-${openshift_major_version}
+      when: ansible_distribution in ['CentOS']
+    - name: download ocinventory
+      get_url:
+        url: https://github.com/literalice/openshift-inventory-utils/releases/download/v0.2/ocinventory_unix
+        dest: /usr/local/bin/ocinventory
+        mode: 0711

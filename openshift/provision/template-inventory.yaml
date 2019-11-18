@@ -1,0 +1,84 @@
+OSEv3:
+  children:
+    masters:
+      hosts:
+        master1.openshift.local: ""
+    etcd:
+      hosts:
+        master1.openshift.local: ""
+    nodes:
+      hosts:
+        master1.openshift.local:
+          openshift_node_group_name: node-config-master
+        infra1.openshift.local:
+          openshift_node_group_name: node-config-infra        
+        node-databas1.openshift.local:
+          openshift_node_group_name: node-config-compute-databas        
+        node-verksamhet1.openshift.local:
+          openshift_node_group_name: node-config-compute-verksamhet        
+
+    # new_nodes:
+    #   hosts:
+    #     infra2.openshift.local:
+    #       openshift_node_group_name: node-config-infra
+
+  vars:
+    ansible_become: true
+    ansible_ssh_user: ${ansible_user}
+    ansible_user: ${ansible_user}
+    containerized: true
+    timeout: 60
+    openshift_deployment_type: ${openshift_deployment_type}
+${openshift_deployment_type == "openshift-enterprise" ? "#" : ""}    openshift_additional_repos:
+${openshift_deployment_type == "openshift-enterprise" ? "#" : ""}    - {id: 'centos-okd-ci', name: 'centos-okd-ci', baseurl: 'https://rpms.svc.ci.openshift.org/openshift-origin-v3.11', gpgcheck: '0', enabled: '1'}
+    openshift_release: "v${openshift_major_version}"
+    os_sdn_network_plugin_name: 'redhat/openshift-ovs-networkpolicy'    
+    openshift_disable_check: 'docker_storage,disk_availability,memory_availability,docker_image_availability'    
+    # Configure openshift node groups
+    openshift_node_groups: [{'name': 'node-config-compute-presentation', 'labels': ['node-role.kubernetes.io/compute=true','zone=presentation']},{'name': 'node-config-compute-verksamhet', 'labels': ['node-role.kubernetes.io/compute=true']},{'name': 'node-config-compute-databas', 'labels': ['node-role.kubernetes.io/compute=true']},{'name': 'node-config-master', 'labels': ['node-role.kubernetes.io/master=true']},{'name': 'node-config-master-infra', 'labels': ['node-role.kubernetes.io/infra=true,node-role.kubernetes.io/master=true']},{'name': 'node-config-infra', 'labels': ['node-role.kubernetes.io/infra=true',]}]
+    # Openshift Image-policy
+    # openshift_master_image_policy_config: {'internalRegistryHostname': 'docker-registry.default.svc:5000', 'additionalTrustedCA': '/etc/origin/master/additional_ca.crt'} 
+    # Htpasswd Auth
+    openshift_master_identity_providers: [{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+    openshift_master_htpasswd_users: {'admin': '$apr1$iPfN63Ls$66gtR8SzMJYgWSCOzk1ye1'}        
+    # HA Cluster
+    # openshift_master_cluster_method: native
+    openshift_master_cluster_hostname: ${master_domain}
+    openshift_master_cluster_public_hostname: ${platform_domain}
+    openshift_master_default_subdomain: ${platform_domain}    
+    openshift_repos_enable_testing: ${openshift_repos_enable_testing}        
+    openshift_master_bootstrap_auto_approve: "true"
+    openshift_cloudprovider_kind: "azure"
+    openshift_cloudprovider_azure_client_id: "${azure_client_id}"
+    openshift_cloudprovider_azure_client_secret: "${azure_client_secret}"
+    openshift_cloudprovider_azure_tenant_id: "${azure_tenant_id}"
+    openshift_cloudprovider_azure_subscription_id: "${azure_subscription_id}"
+    openshift_cloudprovider_azure_resource_group: "${azure_resource_group}"
+    openshift_cloudprovider_azure_location: "${azure_location}"
+    openshift_clusterid: ${platform_name}
+    template_service_broker_install: "false"
+    openshift_cluster_monitoring_operator_install: "false"
+    openshift_logging_install_logging: "false"
+    openshift_logging_es_memory_limit: "1024M"
+    openshift_logging_es_nodeselector:
+      node-role.kubernetes.io/compute: "true"
+    openshift_certificate_expiry_warning_days: 30
+    openshift_master_admission_plugin_config: '{ "MutatingAdmissionWebhook": { "configuration": { "apiVersion": "apiserver.config.k8s.io/v1alpha1", "kubeConfigFile": "/etc/origin/master/admin.kubeconfig", "kind": "WebhookAdmission" } }, "ValidatingAdmissionWebhook": { "configuration": { "apiVersion": "apiserver.config.k8s.io/v1alpha1", "kubeConfigFile": "/etc/origin/master/admin.kubeconfig", "kind": "WebhookAdmission" } } }'
+    openshift_cluster_admin_users:
+    - admin
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}    oreg_auth_user: "${rhn_username}"
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}    oreg_auth_password: "${rhn_password}"
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}    openshift_additional_registry_credentials:
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}    - host: registry.connect.redhat.com
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}      user: "${rhn_username}"
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}      password: "${rhn_password}"
+${openshift_deployment_type == "openshift-enterprise" ? "" : "#"}      test_image: mongodb/enterprise-operator:0.3.2    
+${named_certificate ? "" : "#"}    openshift_master_named_certificates:
+${named_certificate ? "" : "#"}    - certfile: '/home/${ansible_user}/public_certificate.pem'
+${named_certificate ? "" : "#"}      keyfile: '/home/${ansible_user}/public_certificate.key'
+${named_certificate ? "" : "#"}      cafile: '/home/${ansible_user}/public_certificate_intermediate.pem'
+${named_certificate ? "" : "#"}      names: ['${platform_domain}']
+${named_certificate ? "" : "#"}    openshift_hosted_router_certificate:
+${named_certificate ? "" : "#"}      certfile: '/home/${ansible_user}/public_certificate.pem'
+${named_certificate ? "" : "#"}      keyfile: '/home/${ansible_user}/public_certificate.key'
+${named_certificate ? "" : "#"}      cafile: '/home/${ansible_user}/public_certificate_intermediate.pem'
