@@ -35,6 +35,8 @@ terraform output public_certificate_key
 terraform output public_certificate_intermediate_pem
 ```
 
+Once the certificate is generated, you can use these certificates in either terraform-ocp.tfvars or terraform-okd.tfvars files according to your needs
+
 ### Create Openshift stack
 
 #### Create service principal
@@ -49,14 +51,14 @@ az ad sp create-for-rbac -n {PRINCIPAL_NAME} --password {PASSWORD} --role contri
 
 You can tweak the [OpenShift inventory file](openshift/provision/template-inventory.yaml). Its rendered, copied and executed on the server using [inventory.tf](openshift/inventory.tf).
 
-To configure OKD, modify the variables in `openshift/terraform-okd.tfvars` and apply:
+To configure OKD, modify the variables in `openshift/terraform-okd.tfvars`, leave the empty variables and replace the variables filled with capital letters and apply:
 
 ```bash
 cd openshift
 terraform apply -var-file=terraform-okd.tfvars
 ```
 
-To configure OCP, modify the variables in `openshift/terraform-ocp.tfvars` and apply:
+To configure OCP, modify the variables in `openshift/terraform-ocp.tfvars`, replace the variables in capital letters and apply:
 
 ```bash
 cd openshift
